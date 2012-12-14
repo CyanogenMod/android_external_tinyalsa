@@ -52,7 +52,8 @@ struct mixer_ctl {
 
 struct mixer {
     int fd;
-    struct snd_ctl_elem_info *info;
+    struct snd_ctl_card_info card_info;
+    struct snd_ctl_elem_info *elem_info;
     struct mixer_ctl *ctl;
     unsigned int count;
 };
@@ -79,8 +80,8 @@ void mixer_close(struct mixer *mixer)
         free(mixer->ctl);
     }
 
-    if (mixer->info)
-        free(mixer->info);
+    if (mixer->elem_info)
+        free(mixer->elem_info);
 
     free(mixer);
 
@@ -111,8 +112,11 @@ struct mixer *mixer_open(unsigned int card)
         goto fail;
 
     mixer->ctl = calloc(elist.count, sizeof(struct mixer_ctl));
-    mixer->info = calloc(elist.count, sizeof(struct snd_ctl_elem_info));
-    if (!mixer->ctl || !mixer->info)
+    mixer->elem_info = calloc(elist.count, sizeof(struct snd_ctl_elem_info));
+    if (!mixer->ctl || !mixer->elem_info)
+        goto fail;
+
+    if (ioctl(fd, SNDRV_CTL_IOCTL_CARD_INFO, &mixer->card_info) < 0)
         goto fail;
 
     eid = calloc(elist.count, sizeof(struct snd_ctl_elem_id));
@@ -127,7 +131,7 @@ struct mixer *mixer_open(unsigned int card)
         goto fail;
 
     for (n = 0; n < mixer->count; n++) {
-        struct snd_ctl_elem_info *ei = mixer->info + n;
+        struct snd_ctl_elem_info *ei = mixer->elem_info + n;
         ei->id.numid = eid[n].numid;
         if (ioctl(fd, SNDRV_CTL_IOCTL_ELEM_INFO, ei) < 0)
             goto fail;
@@ -165,6 +169,11 @@ fail:
     return 0;
 }
 
+const char *mixer_get_name(struct mixer *mixer)
+{
+    return (const char *)mixer->card_info.name;
+}
+
 unsigned int mixer_get_num_ctls(struct mixer *mixer)
 {
     if (!mixer)
@@ -189,10 +198,15 @@ struct mixer_ctl *mixer_get_ctl_by_name(struct mixer *mixer, const char *name)
         return NULL;
 
     for (n = 0; n < mixer->count; n++)
-        if (!strcmp(name, (char*) mixer->info[n].id.name))
+        if (!strcmp(name, (char*) mixer->elem_info[n].id.name))
             return mixer->ctl + n;
 
     return NULL;
+}
+
+void mixer_ctl_update(struct mixer_ctl *ctl)
+{
+    ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_INFO, ctl->info);
 }
 
 const char *mixer_ctl_get_name(struct mixer_ctl *ctl)
@@ -317,13 +331,14 @@ int mixer_ctl_get_value(struct mixer_ctl *ctl, unsigned int id)
     return 0;
 }
 
-int mixer_ctl_get_bytes(struct mixer_ctl *ctl, void *data, size_t len)
+int mixer_ctl_get_array(struct mixer_ctl *ctl, void *array, size_t count)
 {
     struct snd_ctl_elem_value ev;
     int ret;
+    size_t size;
+    void *source;
 
-    if (!ctl || (len > ctl->info->count) || !len || !data ||
-        (ctl->info->type != SNDRV_CTL_ELEM_TYPE_BYTES))
+    if (!ctl || (count > ctl->info->count) || !count || !array)
         return -EINVAL;
 
     memset(&ev, 0, sizeof(ev));
@@ -333,7 +348,23 @@ int mixer_ctl_get_bytes(struct mixer_ctl *ctl, void *data, size_t len)
     if (ret < 0)
         return ret;
 
-    memcpy(data, ev.value.bytes.data, len);
+    switch (ctl->info->type) {
+    case SNDRV_CTL_ELEM_TYPE_BOOLEAN:
+    case SNDRV_CTL_ELEM_TYPE_INTEGER:
+        size = sizeof(ev.value.integer.value[0]);
+        source = ev.value.integer.value;
+        break;
+
+    case SNDRV_CTL_ELEM_TYPE_BYTES:
+        size = sizeof(ev.value.bytes.data[0]);
+        source = ev.value.bytes.data;
+        break;
+
+    default:
+        return -EINVAL;
+    }
+
+    memcpy(array, source, size * count);
 
     return 0;
 }
@@ -372,18 +403,35 @@ int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value)
     return ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_WRITE, &ev);
 }
 
-int mixer_ctl_set_bytes(struct mixer_ctl *ctl, const void *data, size_t len)
+int mixer_ctl_set_array(struct mixer_ctl *ctl, const void *array, size_t count)
 {
     struct snd_ctl_elem_value ev;
+    size_t size;
+    void *dest;
 
-    if (!ctl || (len > ctl->info->count) || !len || !data ||
-        (ctl->info->type != SNDRV_CTL_ELEM_TYPE_BYTES))
+    if (!ctl || (count > ctl->info->count) || !count || !array)
         return -EINVAL;
 
     memset(&ev, 0, sizeof(ev));
     ev.id.numid = ctl->info->id.numid;
 
-    memcpy(ev.value.bytes.data, data, len);
+    switch (ctl->info->type) {
+    case SNDRV_CTL_ELEM_TYPE_BOOLEAN:
+    case SNDRV_CTL_ELEM_TYPE_INTEGER:
+        size = sizeof(ev.value.integer.value[0]);
+        dest = ev.value.integer.value;
+        break;
+
+    case SNDRV_CTL_ELEM_TYPE_BYTES:
+        size = sizeof(ev.value.bytes.data[0]);
+        dest = ev.value.bytes.data;
+        break;
+
+    default:
+        return -EINVAL;
+    }
+
+    memcpy(dest, array, size * count);
 
     return ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_WRITE, &ev);
 }
