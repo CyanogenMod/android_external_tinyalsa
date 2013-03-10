@@ -349,6 +349,48 @@ int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value)
     return ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_WRITE, &ev);
 }
 
+int mixer_ctl_set_multivalue(struct mixer_ctl *ctl, unsigned int num, int *values)
+{
+    struct snd_ctl_elem_value ev;
+    unsigned int i;
+    int ret;
+
+    if (!ctl || (num > ctl->info->count))
+        return -EINVAL;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.id.numid = ctl->info->id.numid;
+
+    switch (ctl->info->type) {
+    case SNDRV_CTL_ELEM_TYPE_BOOLEAN:
+        for (i=0; i < 16; i++) {
+            ev.value.integer.value[i] = 0;
+        }
+        for (i=0; i < num; i++) {
+            ev.value.integer.value[i] = !!(values[i]);
+        }
+        break;
+
+    case SNDRV_CTL_ELEM_TYPE_INTEGER:
+        for (i=0; i < 16; i++) {
+            ev.value.integer.value[i] = 0;
+        }
+        for (i=0; i < num; i++) {
+            ev.value.integer.value[i] = values[i];
+        }
+        break;
+
+    case SNDRV_CTL_ELEM_TYPE_ENUMERATED:
+        ev.value.enumerated.item[0] = values[0];
+        break;
+
+    default:
+        return -EINVAL;
+    }
+
+    return ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_WRITE, &ev);
+}
+
 int mixer_ctl_get_range_min(struct mixer_ctl *ctl)
 {
     int ret;

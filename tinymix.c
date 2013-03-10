@@ -173,21 +173,35 @@ static void tinymix_set_value(struct mixer *mixer, unsigned int id,
 {
     struct mixer_ctl *ctl;
     enum mixer_ctl_type type;
-    unsigned int num_values;
-    unsigned int i;
+    unsigned int num_values, num_ctl_vals;
+    unsigned int i, k;
+    int values[4];
+    char *substring;
 
     ctl = mixer_get_ctl(mixer, id);
     type = mixer_ctl_get_type(ctl);
-    num_values = mixer_ctl_get_num_values(ctl);
+    num_ctl_vals = mixer_ctl_get_num_values(ctl);
 
     if (isdigit(string[0])) {
-        int value = atoi(string);
 
+        num_values = 1;
+        for (i = 0; i < strlen(string); i++) {
+            if (string[i] == ',') num_values++;
+        }
+        substring = string;
+        k = strlen(string);
+        for (i = 0; i < k; i++) {
+            if (substring[i] == ',') substring[i] = '\0';
+        }
+        substring = string;
         for (i = 0; i < num_values; i++) {
-            if (mixer_ctl_set_value(ctl, i, value)) {
-                fprintf(stderr, "Error: invalid value\n");
-                return;
-            }
+            values[i] = atoi(substring);
+            substring += (strlen(substring) + 1);
+        }
+
+        if (mixer_ctl_set_multivalue(ctl, num_values, values)) {
+            fprintf(stderr, "Error: invalid values for %u\n", id);
+            return;
         }
     } else {
         if (type == MIXER_CTL_TYPE_ENUM) {
