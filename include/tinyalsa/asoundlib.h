@@ -258,6 +258,7 @@ int mixer_ctl_set_percent(struct mixer_ctl *ctl, unsigned int id, int percent);
 int mixer_ctl_get_value(struct mixer_ctl *ctl, unsigned int id);
 int mixer_ctl_get_array(struct mixer_ctl *ctl, void *array, size_t count);
 int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value);
+int mixer_ctl_set_multivalue(struct mixer_ctl *ctl, unsigned int num, int *values);
 int mixer_ctl_set_array(struct mixer_ctl *ctl, const void *array, size_t count);
 int mixer_ctl_set_enum_by_string(struct mixer_ctl *ctl, const char *string);
 
