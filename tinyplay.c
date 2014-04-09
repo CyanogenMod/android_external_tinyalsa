@@ -59,6 +59,7 @@ struct chunk_fmt {
 };
 
 static int close = 0;
+static int data_sz = 0;
 
 void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned int channels,
                  unsigned int rate, unsigned int bits, unsigned int period_size,
@@ -117,6 +118,7 @@ int main(int argc, char **argv)
             break;
         case ID_DATA:
             /* Stop looking for chunks */
+            data_sz = chunk_header.sz;
             more_chunks = 0;
             break;
         default:
@@ -217,6 +219,7 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
     char *buffer;
     int size;
     int num_read;
+    int remaining_data;
 
     config.channels = channels;
     config.rate = rate;
@@ -250,6 +253,8 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
         return;
     }
 
+    remaining_data = data_sz;
+
     printf("Playing sample: %u ch, %u hz, %u bit\n", channels, rate, bits);
 
     /* catch ctrl-c to shutdown cleanly */
@@ -262,8 +267,13 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
                 fprintf(stderr, "Error playing sample\n");
                 break;
             }
+            if (remaining_data) {
+                remaining_data -= size;
+                if (remaining_data < size)
+                    size = remaining_data;
+            }
         }
-    } while (!close && num_read > 0);
+    } while (!close && num_read > 0 && !(remaining_data <= 0));
 
     free(buffer);
     pcm_close(pcm);
