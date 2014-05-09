@@ -198,7 +198,7 @@ static int oops(struct pcm *pcm, int e, const char *fmt, ...)
     if (errno)
         snprintf(pcm->error + sz, PCM_ERROR_MAX - sz,
                  ": %s", strerror(e));
-    return -1;
+    return -errno;
 }
 
 static unsigned int pcm_format_to_alsa(enum pcm_format format)
