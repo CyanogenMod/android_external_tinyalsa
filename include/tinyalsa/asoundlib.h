@@ -1,5 +1,8 @@
 /* asoundlib.h
 **
+** Copyright (c) 2013, The Linux Foundation. All rights reserved.
+** Not a contribution.
+**
 ** Copyright 2011, The Android Open Source Project
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -202,6 +205,9 @@ int pcm_mmap_commit(struct pcm *pcm, unsigned int offset, unsigned int frames);
 /* Start and stop a PCM channel that doesn't transfer data */
 int pcm_start(struct pcm *pcm);
 int pcm_stop(struct pcm *pcm);
+
+/* ioctl function for PCM driver */
+int pcm_ioctl(struct pcm *pcm, int request, ...);
 
 /* Interrupt driven API */
 int pcm_wait(struct pcm *pcm, int timeout);
