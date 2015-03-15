@@ -115,10 +115,12 @@ struct pcm_config {
 /* PCM parameters */
 enum pcm_param
 {
+#ifndef HAVE_PRE_LOLLIPOP_AUDIO_BLOB
     /* mask parameters */
     PCM_PARAM_ACCESS,
     PCM_PARAM_FORMAT,
     PCM_PARAM_SUBFORMAT,
+#endif
     /* interval parameters */
     PCM_PARAM_SAMPLE_BITS,
     PCM_PARAM_FRAME_BITS,
@@ -132,6 +134,12 @@ enum pcm_param
     PCM_PARAM_BUFFER_SIZE,
     PCM_PARAM_BUFFER_BYTES,
     PCM_PARAM_TICK_TIME,
+#ifdef HAVE_PRE_LOLLIPOP_AUDIO_BLOB
+    /* mask parameters */
+    PCM_PARAM_ACCESS,
+    PCM_PARAM_FORMAT,
+    PCM_PARAM_SUBFORMAT,
+#endif
 };
 
 /* Mixer control types */
