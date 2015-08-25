@@ -212,7 +212,7 @@ void play_sample(FILE *file, unsigned int card, unsigned int device, unsigned in
                  unsigned int rate, unsigned int bits, unsigned int period_size,
                  unsigned int period_count)
 {
-    struct pcm_config config;
+    struct pcm_config config = {0};
     struct pcm *pcm;
     char *buffer;
     int size;
