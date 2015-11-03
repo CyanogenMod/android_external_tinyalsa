@@ -394,10 +394,15 @@ int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value)
         break;
 
     case SNDRV_CTL_ELEM_TYPE_INTEGER:
+        if (value > mixer_ctl_get_range_max(ctl) ||
+            value < mixer_ctl_get_range_min(ctl))
+            return -EINVAL;
         ev.value.integer.value[id] = value;
         break;
 
     case SNDRV_CTL_ELEM_TYPE_ENUMERATED:
+        if (value < 0 || value >= mixer_ctl_get_num_enums(ctl))
+            return -EINVAL;
         ev.value.enumerated.item[id] = value;
         break;
 
