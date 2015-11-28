@@ -1,5 +1,9 @@
 LOCAL_PATH:= $(call my-dir)
 
+ifeq ($(TARGET_TINY_ALSA_IGNORE_SILENCE_SIZE),true)
+   LOCAL_CFLAGS += -DIGNORE_SILENCE_SIZE
+endif
+
 include $(CLEAR_VARS)
 LOCAL_C_INCLUDES:= external/tinyalsa/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
