@@ -393,12 +393,14 @@ int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value)
         ev.value.integer.value[id] = !!value;
         break;
 
-    case SNDRV_CTL_ELEM_TYPE_INTEGER:
-        if (value > mixer_ctl_get_range_max(ctl) ||
-            value < mixer_ctl_get_range_min(ctl))
+    case SNDRV_CTL_ELEM_TYPE_INTEGER: {
+        int min = mixer_ctl_get_range_min(ctl);
+        int max = mixer_ctl_get_range_max(ctl);
+        if (min < max && (value < min || value > max))
             return -EINVAL;
         ev.value.integer.value[id] = value;
         break;
+    }
 
     case SNDRV_CTL_ELEM_TYPE_ENUMERATED:
         if (value < 0 || value >= mixer_ctl_get_num_enums(ctl))
