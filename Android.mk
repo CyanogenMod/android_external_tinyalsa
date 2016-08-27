@@ -39,7 +39,7 @@ LOCAL_SRC_FILES:= tinyplay.c
 LOCAL_MODULE := tinyplay
 LOCAL_SHARED_LIBRARIES:= libcutils libutils libtinyalsa
 LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS += -Werror
+LOCAL_CFLAGS += -Werror -Wno-missing-field-initializers
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -53,7 +53,7 @@ LOCAL_SRC_FILES:= tinyplay.c
 LOCAL_MODULE := tinyplay
 LOCAL_STATIC_LIBRARIES:= libcutils libutils libtinyalsa
 LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS += -Werror
+LOCAL_CFLAGS += -Werror -Wno-missing-field-initializers
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -67,7 +67,7 @@ LOCAL_SRC_FILES:= tinycap.c
 LOCAL_MODULE := tinycap
 LOCAL_SHARED_LIBRARIES:= libcutils libutils libtinyalsa
 LOCAL_MODULE_TAGS := optional
-LOCAL_CFLAGS += -Werror
+LOCAL_CFLAGS += -Werror -Wno-missing-field-initializers
 
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
